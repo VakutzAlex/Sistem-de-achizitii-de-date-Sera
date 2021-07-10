@@ -1,0 +1,51 @@
+C51 COMPILER V9.60.0.0   122                                                               05/24/2021 16:42:45 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE 122
+OBJECT MODULE PLACED IN .\Objects\122.obj
+COMPILER INVOKED BY: A:\Keil\C51\BIN\C51.EXE 122.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\122.lst)
+                    - TABS(2) OBJECT(.\Objects\122.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          
+   3          unsigned char Rx();
+   4          
+   5          void main(void)
+   6          {
+   7   1        SCON = 0x50;
+   8   1        TMOD = 0x20;
+   9   1        TH1=-6;
+  10   1        TR1=1;
+  11   1        RI=0;
+  12   1        
+  13   1        while(1)
+  14   1        {
+  15   2          P2=Rx();
+  16   2        }
+  17   1      }
+  18          
+  19          unsigned char Rx()
+  20          {
+  21   1        unsigned char rec;
+  22   1        while(RI==0);
+  23   1        rec=SBUF;
+  24   1        RI=0;
+  25   1        
+  26   1        return rec;
+  27   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     28    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

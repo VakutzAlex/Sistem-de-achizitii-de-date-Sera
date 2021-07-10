@@ -1,0 +1,29 @@
+A51 MACRO ASSEMBLER  MAYBE                                                                07/09/2021 09:34:47 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\Maybe.obj
+ASSEMBLER INVOKED BY: A:\Keil\C51\BIN\A51.EXE Maybe.a51 SET(SMALL) DEBUG PRINT(.\Listings\Maybe.lst) OBJECT(.\Objects\Ma
+                      ybe.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+0000 740F              1     mov a, #0Fh
+0002 5290              2     anl P1,a
+                       3     
+                       4     end
+A51 MACRO ASSEMBLER  MAYBE                                                                07/09/2021 09:34:47 PAGE     2
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+P1 . . . . . . . .  D ADDR   0090H   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

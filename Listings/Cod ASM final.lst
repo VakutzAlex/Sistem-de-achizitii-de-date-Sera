@@ -1,0 +1,249 @@
+A51 MACRO ASSEMBLER  COD_ASM_FINAL                                                        05/25/2021 13:47:01 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\Cod ASM final.obj
+ASSEMBLER INVOKED BY: A:\Keil\C51\BIN\A51.EXE Cod ASM final.a51 SET(SMALL) DEBUG PRINT(.\Listings\Cod ASM final.lst) OBJ
+                      ECT(.\Objects\Cod ASM final.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+0000                   1     org 0000h
+                       2             
+                       3     ;LCD pins
+  0090                 4     RS equ P1.0
+  0091                 5     E equ P1.1
+                       6     
+                       7     ;Button pins
+  0084                 8     UP equ P0.4
+  0085                 9     DOWN equ P0.5
+  0086                10     OK equ P0.6
+  0087                11     BACK equ P0.7
+                      12             
+                      13     ;LED pins
+  0094                14     D_UP equ P1.4
+  0095                15     D_DOWN equ P1.5
+  0096                16     D_OK equ P1.6
+  0097                17     D_BACK equ P1.7
+                      18             
+                      19     ;I2C pins
+  0092                20     SDA equ P1.2
+  0093                21     SCL equ P1.3
+                      22             
+                      23     ;ADC pins
+  0080                24     EOC equ P0.0
+  0081                25     OE equ P0.1
+  0082                26     START equ P0.2
+                      27             
+                      28     ;Params
+                      29     ;ball_res equ #5000h
+                      30     ;max_adc equ #256h
+                      31     ;beta equ #3965h
+                      32     ;room_temp equ #298.15h
+                      33     ;res_room_temp equ #5000h
+                      34             
+                      35     ;LCD_init()
+0000 7438             36     mov a,#38h ;LCD-8bit mode
+0002 1145             37     acall LCD_cmd
+0004 115B             38     acall delay
+0006 740C             39     mov a,#0ch ;display on, cursor off
+0008 1145             40     acall LCD_cmd
+000A 115B             41     acall delay
+000C 7401             42     mov a,#01h ;clear LCD
+000E 1145             43     acall LCD_cmd
+0010 115B             44     acall delay
+0012 7480             45     mov a,#80h ;cursor at line 1
+0014 1145             46     acall LCD_cmd
+0016 115B             47     acall delay
+                      48     
+                      49     ;INPUT-OUTPUT initialization
+0018 75A000           50     mov P2,#00h  
+001B 75B0FF           51     mov P3,#0FFh  
+                      52     
+001E D284             53     setb UP ;UP=1
+0020 D285             54     setb DOWN ;DOWN=1
+0022 D286             55     setb OK ;OK=1
+0024 D287             56     setb BACK ;BACK=1
+                      57     
+A51 MACRO ASSEMBLER  COD_ASM_FINAL                                                        05/25/2021 13:47:01 PAGE     2
+
+0026 C294             58     clr D_UP ;D_UP=0
+0028 C295             59     clr D_DOWN ;D_DOWN=0
+002A C296             60     clr D_OK ;D_OK=0
+002C C297             61     clr D_BACK ;D_BACK=0
+                      62     
+002E D280             63     setb EOC ;EOC=1
+0030 D281             64     setb OE ;OE=1
+0032 D282             65     setb START ;START=1
+                      66     
+0034 7806             67     mov r0,#6;counter for dptr
+0036 9000C5           68     mov dptr,#mesaj1
+0039                  69     here1:
+0039 7400             70     mov a,#00h
+003B 93               71     movc a,@a+dptr
+003C F5A0             72     mov p2,a
+003E 1150             73     acall LCD_disp
+0040 115B             74     acall delay
+0042 A3               75     inc dptr
+0043 D8F4             76     djnz r0,here1
+                      77     
+                      78     ;LCD_cmd()
+0045                  79     LCD_cmd:
+0045 F5A0             80     mov P2,a
+0047 D290             81     setb RS ;RS=1
+0049 D291             82     setb E; E=1
+004B 115B             83     acall delay
+004D C291             84     clr e ;E=0
+004F 22               85     ret
+                      86     
+                      87     ;LCD_disp()
+0050                  88     LCD_disp:
+0050 F5A0             89     mov P2,a
+0052 D290             90     setb RS ;RS=1
+0054 D291             91     setb E ;E=1
+0056 115B             92     acall delay
+0058 C291             93     clr E
+005A 22               94     ret
+                      95     
+                      96     ;delay()
+005B                  97     delay:
+005B C28C             98     clr tr0
+005D 438901           99     orl TMOD,#01
+0060 758CEE          100     mov TH0, #0eeh
+0063 758A00          101     mov TL0, #00h
+0066 D28C            102     setb TR0
+0068                 103     again:
+0068 308DFD          104     jnb TF0, again
+006B C28D            105     clr TF0
+006D C28C            106     clr TR0
+006F 22              107     ret
+                     108     
+                     109     ;I2C_init()
+0070                 110     I2c_init:
+0070 D292            111     setb SDA ;SDA=1
+0072 D293            112     setb SCL ;SCL=1
+0074 22              113     ret
+                     114     
+0075                 115     rstart:
+0075 C293            116     clr SCL ;SCL=0
+0077 D292            117     setb SDA ;SDA=1
+0079 D293            118     setb SCL ;SCL=1
+007B C292            119     clr SDA ;SDA=0
+007D 22              120     ret
+                     121     
+007E                 122     I2C_start:
+007E D293            123     setb SCL ;SCL=1
+A51 MACRO ASSEMBLER  COD_ASM_FINAL                                                        05/25/2021 13:47:01 PAGE     3
+
+0080 C292            124     clr SDA ;SDA=0
+0082 C293            125     CLR SCL ;SCL=0
+0084 22              126     ret
+                     127     
+0085                 128     I2C_stop:
+0085 C293            129     clr SCL ;SCL=0
+0087 C292            130     clr SDA ;SDA=1
+0089 D293            131     setb SCL ;SCL=1
+008B D292            132     setb SDA ;SDA=1
+008D 22              133     ret
+                     134     
+008E                 135     I2C_sendByte:
+008E 7F08            136     mov r7,#08h
+0090                 137     back1:
+0090 C293            138     clr SCL
+0092 33              139     rlc a
+0093 9292            140     mov SDA,c
+0095 D293            141     setb SCL
+0097 DFF7            142     djnz r7, back1
+0099 C293            143     clr SCL
+009B D292            144     setb SDA
+009D D293            145     setb SCL
+009F A292            146     mov c, SDA
+00A1 C293            147     clr SCL
+00A3 22              148     ret
+                     149     
+00A4                 150     I2C_ack:
+00A4 C292            151     clr SDA
+00A6 D293            152     setb SCL
+00A8 C293            153     clr SCL
+00AA D292            154     setb SDA
+00AC 22              155     ret
+                     156     
+00AD                 157     I2C_nack:
+00AD D292            158     setb SDA
+00AF D293            159     setb SCL
+00B1 C293            160     clr SCL
+00B3 D293            161     setb SCL
+                     162     
+00B5                 163     I2C_readByte:
+00B5 7F08            164     mov r7,#08h
+00B7                 165     back2:
+00B7 C293            166     clr SCL
+00B9 D293            167     setb SCL
+00BB A292            168     mov c, SDA
+00BD 33              169     rlc a
+00BE DFF7            170     djnz r7, back2
+00C0 C293            171     clr SCL
+00C2 D292            172     setb SDA
+00C4 22              173     ret
+                     174     
+                     175     ;message
+00C5                 176     mesaj1:
+00C5 54656D70        177     db 'Temperature';
+00C9 65726174                
+00CD 757265                  
+                     178     
+                     179     end
+A51 MACRO ASSEMBLER  COD_ASM_FINAL                                                        05/25/2021 13:47:01 PAGE     4
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+AGAIN. . . . . . .  C ADDR   0068H   A   
+BACK . . . . . . .  B ADDR   0080H.7 A   
+BACK1. . . . . . .  C ADDR   0090H   A   
+BACK2. . . . . . .  C ADDR   00B7H   A   
+DELAY. . . . . . .  C ADDR   005BH   A   
+DOWN . . . . . . .  B ADDR   0080H.5 A   
+D_BACK . . . . . .  B ADDR   0090H.7 A   
+D_DOWN . . . . . .  B ADDR   0090H.5 A   
+D_OK . . . . . . .  B ADDR   0090H.6 A   
+D_UP . . . . . . .  B ADDR   0090H.4 A   
+E. . . . . . . . .  B ADDR   0090H.1 A   
+EOC. . . . . . . .  B ADDR   0080H.0 A   
+HERE1. . . . . . .  C ADDR   0039H   A   
+I2C_ACK. . . . . .  C ADDR   00A4H   A   
+I2C_INIT . . . . .  C ADDR   0070H   A   
+I2C_NACK . . . . .  C ADDR   00ADH   A   
+I2C_READBYTE . . .  C ADDR   00B5H   A   
+I2C_SENDBYTE . . .  C ADDR   008EH   A   
+I2C_START. . . . .  C ADDR   007EH   A   
+I2C_STOP . . . . .  C ADDR   0085H   A   
+LCD_CMD. . . . . .  C ADDR   0045H   A   
+LCD_DISP . . . . .  C ADDR   0050H   A   
+MESAJ1 . . . . . .  C ADDR   00C5H   A   
+OE . . . . . . . .  B ADDR   0080H.1 A   
+OK . . . . . . . .  B ADDR   0080H.6 A   
+P0 . . . . . . . .  D ADDR   0080H   A   
+P1 . . . . . . . .  D ADDR   0090H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+P3 . . . . . . . .  D ADDR   00B0H   A   
+RS . . . . . . . .  B ADDR   0090H.0 A   
+RSTART . . . . . .  C ADDR   0075H   A   
+SCL. . . . . . . .  B ADDR   0090H.3 A   
+SDA. . . . . . . .  B ADDR   0090H.2 A   
+START. . . . . . .  B ADDR   0080H.2 A   
+TF0. . . . . . . .  B ADDR   0088H.5 A   
+TH0. . . . . . . .  D ADDR   008CH   A   
+TL0. . . . . . . .  D ADDR   008AH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR0. . . . . . . .  B ADDR   0088H.4 A   
+UP . . . . . . . .  B ADDR   0080H.4 A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

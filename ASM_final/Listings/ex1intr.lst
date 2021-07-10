@@ -1,0 +1,50 @@
+A51 MACRO ASSEMBLER  EX1INTR                                                              05/31/2021 16:20:45 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\ex1intr.obj
+ASSEMBLER INVOKED BY: A:\Keil\C51\BIN\A51.EXE ex1intr.a51 SET(SMALL) DEBUG PRINT(.\Listings\ex1intr.lst) OBJECT(.\Object
+                      s\ex1intr.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+0000                   1     org 0000h
+0000 020030            2     ljmp main
+000B                   3     org 000Bh
+000B B2A1              4     cpl P2.1
+000D 32                5     reti
+0030                   6     org 30h
+0030                   7     main:
+0030 7590FF            8     mov P1, #0FFh
+0033 75A882            9     mov IE, #10000010b
+0036 758902           10     mov TMOD, #02h
+0039 758CA4           11     mov TH0,#-92
+003C D28C             12     setb TR0
+003E                  13     back:
+003E E580             14     mov a,P0
+0040 F590             15     mov P1,a
+0042 80FA             16     sjmp back
+                      17     end
+A51 MACRO ASSEMBLER  EX1INTR                                                              05/31/2021 16:20:45 PAGE     2
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+BACK . . . . . . .  C ADDR   003EH   A   
+IE . . . . . . . .  D ADDR   00A8H   A   
+MAIN . . . . . . .  C ADDR   0030H   A   
+P0 . . . . . . . .  D ADDR   0080H   A   
+P1 . . . . . . . .  D ADDR   0090H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+TH0. . . . . . . .  D ADDR   008CH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR0. . . . . . . .  B ADDR   0088H.4 A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

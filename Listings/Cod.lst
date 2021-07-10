@@ -1,0 +1,662 @@
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE COD
+OBJECT MODULE PLACED IN .\Objects\Cod.obj
+COMPILER INVOKED BY: A:\Keil\C51\BIN\C51.EXE Cod.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Cod.lst)
+                    - TABS(2) OBJECT(.\Objects\Cod.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <stdio.h>
+   3          #include <math.h>
+   4          #define LCD P2 // pin for LCD
+   5          #define ADC P3 // pin for ADC
+   6          #define SHTAddr 0x80 //Humidity sensor address 
+   7          
+   8          //bool data type
+   9          typedef enum { false, true } bool; //declaring bool type
+  10          bool key_pressed=false;
+  11          bool welcome = true;
+  12          bool mainScreen=true;
+  13          
+  14          //LED Pins
+  15          sbit LED_UP = P1^4;
+  16          sbit LED_DOWN = P1^5;
+  17          sbit LED_OK = P1^6;
+  18          sbit LED_BACK = P1^7;
+  19          
+  20          //Button Pins
+  21          sbit UP = P0^4;
+  22          sbit DOWN = P0^5;
+  23          sbit OK = P0^6;
+  24          sbit BACK = P0^7;
+  25          sbit SET = P0^3;
+  26          
+  27          //Control pins
+  28          sbit RS = P1^0;
+  29          sbit E  = P1^1;
+  30          sbit EOC = P0^0;
+  31          sbit OE = P0^1;
+  32          sbit START = P0^2;
+  33          
+  34          
+  35          //SCL, SDA
+  36          sbit SCL=P1^2;
+  37          sbit SDA=P1^3;
+  38          
+  39          //variables
+  40          int choice;
+  41          float num=0;
+  42          float humidity=0;
+  43          char result[5];
+  44          
+  45          //Set variables
+  46          float setTargetTemp;
+  47          float setTargetHum;
+  48          
+  49          //Variables for readHum()
+  50          unsigned char ack1, hum[2];
+  51          
+  52          //Variables for readThermistor()
+  53          const float bal_res=5000;
+  54          const float max_adc=256;
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 2   
+
+  55          const float beta=3965;
+  56          const float room_temp=298.15;
+  57          const float res_room_temp=5000;
+  58          
+  59          //LCD functions 
+  60          void delay(int);
+  61          void LCD_init(void);
+  62          void cmd(char);
+  63          void dispString(char*);
+  64          void LCD_disp(char);
+  65          
+  66          //Sensor functions
+  67          void readThermistor();
+  68          void readHum();
+  69          void readHum1();
+  70          
+  71          //Setting target temp/hum
+  72          void setTemp();
+  73          void setHum();
+  74          
+  75          //ADC functions
+  76          void read_ADC();
+  77          
+  78          //I2C functions
+  79          void I2C_init(); //initialize I2C pins
+  80          void I2C_start(); //send start bit on I2C
+  81          void I2c_restart(); //send start bit on I2C
+  82          unsigned char I2C_writeByte(unsigned char); //send data on I2C
+  83          unsigned char I2C_readByte(); //read value from I2C
+  84          void I2C_sendACK(); //send ACK bit on i2c
+  85          void I2C_sendNACK(); //send NACK bit on i2c
+  86          void I2C_stop(); //send stop bit on I2C
+  87          
+  88          //Menu functions
+  89          void startScreen(); //shows options
+  90          void optionSelect(); //selects an option
+  91          void mainScreenP(); //shows selected option
+  92          void goBack(); //return to previous screen
+  93          void logOut();
+  94          
+  95          //Additional function
+  96          void dispInstr();
+  97          void LED_light();
+  98          void updateT();
+  99          void updateH();
+ 100          
+ 101          // Main function
+ 102          void main(void)
+ 103          {
+ 104   1        //INPUT-OUPUT defining section
+ 105   1         UP=1; //making input
+ 106   1         DOWN=1; //making input
+ 107   1         BACK=1; //making input
+ 108   1         SET=1; //making input
+ 109   1        
+ 110   1         LED_UP=0; //making output
+ 111   1         LED_DOWN=0; //making output
+ 112   1         LED_OK=0; //making output
+ 113   1         LED_BACK=0; //making output
+ 114   1        
+ 115   1         ADC=0xFF; // making input
+ 116   1         LCD=0x00; //making output
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 3   
+
+ 117   1        
+ 118   1         EOC=1;
+ 119   1         OE=0;
+ 120   1         START=0;
+ 121   1        
+ 122   1         //Initializing the LCD
+ 123   1         LCD_init();
+ 124   1      
+ 125   1         //Initializing the I2C communication
+ 126   1         I2C_init();
+ 127   1         
+ 128   1         
+ 129   1         while(1)
+ 130   1         {
+ 131   2           OK=1;//Establish OK as input
+ 132   2           if(key_pressed==false)
+ 133   2           {dispString("Press any key");
+ 134   3           cmd(0xC0);
+ 135   3           dispString("to continue...");}
+ 136   2           while(key_pressed==false)
+ 137   2           {
+ 138   3             if(UP==0 || DOWN==0 || OK==0 || BACK==0 || SET==0)
+ 139   3             {
+ 140   4               key_pressed=true;
+ 141   4               LED_OK=1;
+ 142   4               delay(100);
+ 143   4               cmd(0x01);
+ 144   4               dispString("Starting up...");
+ 145   4               delay(400);
+ 146   4               LED_OK=0;
+ 147   4             }
+ 148   3           }
+ 149   2           
+ 150   2           if(key_pressed==true)
+ 151   2           {
+ 152   3             if(welcome==true)
+ 153   3             {
+ 154   4               cmd(0x01);
+ 155   4               startScreen();
+ 156   4               welcome=false;
+ 157   4             }
+ 158   3             if(welcome==false)
+ 159   3             {
+ 160   4               if(mainScreen==true)
+ 161   4               {
+ 162   5                 while(OK==1)
+ 163   5                 {
+ 164   6                   startScreen();
+ 165   6                   optionSelect();
+ 166   6                   mainScreenP();
+ 167   6                   if(BACK==0)
+ 168   6                   {
+ 169   7                     OK=0;
+ 170   7                     logOut();
+ 171   7                   }
+ 172   6                   if(SET==0)
+ 173   6                   {
+ 174   7                     cmd(0x01);
+ 175   7                     dispString("Preparing for");
+ 176   7                     cmd(0xc0);
+ 177   7                     dispString("setup");
+ 178   7                     LED_light();
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 4   
+
+ 179   7                     delay(400);
+ 180   7                     //setTemp();
+ 181   7                     setHum();
+ 182   7                     OK=0;
+ 183   7                     cmd(0x01);
+ 184   7                   }
+ 185   6                 }
+ 186   5                 mainScreen=false;
+ 187   5               }
+ 188   4               
+ 189   4               if(mainScreen==false)
+ 190   4               {
+ 191   5                 if(choice==1)
+ 192   5                 {
+ 193   6                   cmd(0x01);
+ 194   6                   readThermistor();
+ 195   6                   goBack();
+ 196   6                 }
+ 197   5                 else
+ 198   5                   if(choice==2)
+ 199   5                   {
+ 200   6                     readHum();
+ 201   6                     delay(500);
+ 202   6                     readHum1();
+ 203   6                     goBack();
+ 204   6                   }
+ 205   5                   else
+ 206   5                   {
+ 207   6                     mainScreen=true;
+ 208   6                   }
+ 209   5               }
+ 210   4               
+ 211   4             }
+ 212   3           }
+ 213   2         }
+ 214   1      }
+ 215          
+ 216          
+ 217          //LCD functions
+ 218          void cmd(char t)
+ 219          {
+ 220   1        LCD = t;
+ 221   1        RS=0;
+ 222   1        E=1;
+ 223   1        delay(5);
+ 224   1        E=0;
+ 225   1      }
+ 226          
+ 227          void LCD_init()
+ 228          {
+ 229   1        cmd(0x38); //data init
+ 230   1        cmd(0x0C); //LCD display on and cursor off
+ 231   1        cmd(0x01); //clear LCD dispaly
+ 232   1        cmd(0x80); //positioning cursor at the first line
+ 233   1      }
+ 234          
+ 235          void delay(int n)
+ 236          {
+ 237   1        int i,j;
+ 238   1        for(i=0;i<n;i++)
+ 239   1          for(j=0;j<100;j++)
+ 240   1            {}
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 5   
+
+ 241   1      }
+ 242          
+ 243          void dispString(char *p)
+ 244          {
+ 245   1        while(*p)
+ 246   1        {
+ 247   2          LCD_disp(*p++);
+ 248   2        }
+ 249   1      }
+ 250          
+ 251          void LCD_disp(char x)
+ 252          {
+ 253   1        LCD=x;
+ 254   1        RS=1;
+ 255   1        E=1;
+ 256   1        delay(5);
+ 257   1        E=0;
+ 258   1      }
+ 259          
+ 260          
+ 261          //ADC functions
+ 262          void read_ADC()
+ 263          {
+ 264   1        num=0;
+ 265   1        START=1;
+ 266   1        delay(5);
+ 267   1        START=0;
+ 268   1        while(EOC==1);
+ 269   1        while(EOC==0);
+ 270   1        OE=1;
+ 271   1        num=ADC;
+ 272   1        delay(5);
+ 273   1        OE=0;
+ 274   1      }
+ 275          
+ 276          
+ 277          //Menu functions
+ 278          void startScreen()
+ 279          {
+ 280   1        cmd(0x80);
+ 281   1        dispString("1.Temperature");
+ 282   1        cmd(0xC0);
+ 283   1        dispString("2.Humidity");
+ 284   1      }
+ 285          
+ 286          void optionSelect()
+ 287          {
+ 288   1        if(UP==0)
+ 289   1          choice=1;
+ 290   1        else
+ 291   1          if(DOWN==0)
+ 292   1            choice=2;
+ 293   1          else
+ 294   1            choice=choice;
+ 295   1      }
+ 296          
+ 297          void mainScreenP()
+ 298          {
+ 299   1        if(choice==1)
+ 300   1        {
+ 301   2          cmd(0x80);
+ 302   2          dispString(">.Temperature");
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 6   
+
+ 303   2          cmd(0xC0);
+ 304   2          dispString("2.Humidity");
+ 305   2        }
+ 306   1        else
+ 307   1         if(choice==2)
+ 308   1         {
+ 309   2           cmd(0x80);
+ 310   2           dispString("1.Temperature");
+ 311   2           cmd(0xC0);
+ 312   2           dispString(">.Humidity");
+ 313   2         }
+ 314   1      }
+ 315          
+ 316          void goBack()
+ 317          {
+ 318   1        while(BACK==1);
+ 319   1        cmd(0x01);
+ 320   1        mainScreen=true;
+ 321   1        key_pressed=true;
+ 322   1      }
+ 323          
+ 324          void logOut()
+ 325          {
+ 326   1        cmd(0x01);
+ 327   1        cmd(0x80);
+ 328   1        dispString("System powering");
+ 329   1        cmd(0xC0);
+ 330   1        dispString("down...");
+ 331   1        key_pressed=false;
+ 332   1        choice=0;
+ 333   1        mainScreen=true;
+ 334   1        welcome=true;
+ 335   1        delay(500);
+ 336   1        cmd(0x01);
+ 337   1      }
+ 338          
+ 339          
+ 340          //I2C functions
+ 341          void I2C_init()
+ 342          {
+ 343   1        SDA=1;
+ 344   1        SCL=1;
+ 345   1      }
+ 346          void I2C_start()
+ 347          {
+ 348   1        SDA=0;
+ 349   1        SCL=0;
+ 350   1      }
+ 351          void I2C_restart()
+ 352          {
+ 353   1        SDA=1;
+ 354   1        SCL=1;
+ 355   1        SDA=0;
+ 356   1        SCL=0;
+ 357   1      }
+ 358          void I2C_stop()
+ 359          {
+ 360   1        SDA=0;
+ 361   1        SCL=0;
+ 362   1        SDA=1;
+ 363   1        SCL=1;
+ 364   1      }
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 7   
+
+ 365          void I2C_sendACK()
+ 366          {
+ 367   1        SDA=0;
+ 368   1        SCL=1;
+ 369   1        SCL=0;
+ 370   1        SDA=1;
+ 371   1      }
+ 372          void I2C_sendNACK()
+ 373          {
+ 374   1        SDA=1;
+ 375   1        SCL=1;
+ 376   1        SCL=0;
+ 377   1        SDA=1;
+ 378   1      }
+ 379          unsigned char I2C_writeByte(unsigned char myData)
+ 380          {
+ 381   1        unsigned char i;
+ 382   1        for(i=0;i<8;i++)
+ 383   1        {
+ 384   2          if((myData & 0x80)==0)
+ 385   2            SDA=0;
+ 386   2          else
+ 387   2            SDA=1;
+ 388   2          SCL=1;
+ 389   2          SCL=0;
+ 390   2          myData=myData<<1;
+ 391   2        }
+ 392   1        SDA=1;
+ 393   1        SCL=1;
+ 394   1        SCL=0;
+ 395   1        return SDA;
+ 396   1      }
+ 397          unsigned char I2C_readByte()
+ 398          {
+ 399   1        unsigned char i, myData=0;
+ 400   1        for(i=0;i<8;i++)
+ 401   1        {
+ 402   2          SCL=1;
+ 403   2          if(SDA)
+ 404   2            myData=myData | 1;
+ 405   2          if(i<7)
+ 406   2            myData=myData<<1;
+ 407   2          SCL=0;
+ 408   2        }
+ 409   1        return myData;
+ 410   1      }
+ 411          
+ 412          
+ 413          
+ 414          //Sensor functions
+ 415          void readThermistor()
+ 416          {
+ 417   1        float rTh=0;
+ 418   1        float tKel=0;
+ 419   1        float tCel=0;
+ 420   1        read_ADC(); //puts the ADC value in num
+ 421   1        rTh=bal_res*((max_adc/num)-1);
+ 422   1        tKel=(beta*room_temp)/(beta+(room_temp*log(rTh/res_room_temp)));
+ 423   1        tCel=tKel-273.15;
+ 424   1        sprintf(result,"%.2f",tCel);
+ 425   1        cmd(0x01);
+ 426   1        dispString("Temperature: ");
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 8   
+
+ 427   1        dispString(result);
+ 428   1        LCD_disp(0xDF); //ascii value of degree(°) symbol
+ 429   1        LCD_disp(0x43); //ascii value for C
+ 430   1        cmd(0xC0);
+ 431   1        dispString("Target: ");
+ 432   1        sprintf(result,"%.2f",setTargetTemp);
+ 433   1        dispString(result);
+ 434   1        LCD_disp(0xDF);
+ 435   1        LCD_disp(0x43);
+ 436   1      }
+ 437          void readHum()
+ 438          {
+ 439   1          //write to slave device
+ 440   1          I2C_start();
+ 441   1          ack1=I2C_writeByte(SHTAddr);
+ 442   1          ack1=I2C_writeByte(0xE5);
+ 443   1          //ack1=I2C_writeByte();
+ 444   1          I2C_stop();
+ 445   1                     
+ 446   1          //read from slave device
+ 447   1          I2C_start();
+ 448   1          I2C_writeByte(SHTAddr|1); //slave address with read byte
+ 449   1          hum[0]=I2C_readByte();//read MSB
+ 450   1          I2C_sendACK();
+ 451   1          hum[1]=I2C_readByte();//read LSB
+ 452   1          I2C_sendNACK();
+ 453   1          I2C_stop();
+ 454   1        
+ 455   1          //hum conversion
+ 456   1          humidity=(((hum[0]*256.0+hum[1])*125.0)/65536.0)-6;
+ 457   1      }
+ 458          void readHum1()
+ 459          {
+ 460   1          //write to slave device
+ 461   1          I2C_start();
+ 462   1          ack1=I2C_writeByte(SHTAddr);
+ 463   1          ack1=I2C_writeByte(0xE5);
+ 464   1          //ack1=I2C_writeByte();
+ 465   1          I2C_stop();
+ 466   1                     
+ 467   1          //read from slave device
+ 468   1          I2C_start();
+ 469   1          I2C_writeByte(SHTAddr|1); //slave address with read byte
+ 470   1          hum[0]=I2C_readByte();//read MSB
+ 471   1          I2C_sendACK();
+ 472   1          hum[1]=I2C_readByte();//read LSB
+ 473   1          I2C_sendNACK();
+ 474   1          I2C_stop();
+ 475   1        
+ 476   1          //hum conversion
+ 477   1          humidity=(((hum[0]*256.0+hum[1])*125.0)/65536.0)-6;
+ 478   1      
+ 479   1          cmd(0x01);
+ 480   1          dispString("Humidity: ");
+ 481   1          sprintf(result,"%.2f",humidity);
+ 482   1          dispString(result);
+ 483   1          dispString("%RH");
+ 484   1          cmd(0xC0);
+ 485   1          dispString("Target: ");
+ 486   1          sprintf(result,"%.2f",setTargetHum);
+ 487   1          dispString(result);
+ 488   1          dispString("%RH");
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 9   
+
+ 489   1      }
+ 490          
+ 491          
+ 492          
+ 493          //Setting target temp/hum
+ 494          void setTemp()
+ 495          {
+ 496   1        dispInstr();
+ 497   1        cmd(0x01); //clear display
+ 498   1        sprintf(result,"%.2f",setTargetTemp);
+ 499   1        dispString("Target temperature:");
+ 500   1        cmd(0xC0);
+ 501   1        dispString(result);
+ 502   1        while(OK!=0)
+ 503   1        {
+ 504   2          if(UP==0)
+ 505   2          {
+ 506   3            setTargetTemp+=10;
+ 507   3            while(UP==0); //button debounce
+ 508   3            updateT();
+ 509   3          }
+ 510   2          if(DOWN==0)
+ 511   2          {
+ 512   3            setTargetTemp+=5;
+ 513   3            while(DOWN==0); //button debounce
+ 514   3            updateT();
+ 515   3          }
+ 516   2          if(BACK==0)
+ 517   2          {
+ 518   3            setTargetTemp+=1;
+ 519   3            while(BACK==0); //button debounce
+ 520   3            updateT();
+ 521   3          }
+ 522   2          if(SET==0)
+ 523   2          {
+ 524   3            setTargetTemp+=0.1;
+ 525   3            while(SET==0); //button debounce
+ 526   3            updateT();
+ 527   3          }
+ 528   2        }
+ 529   1        //ckeck for humidity to be within specified parameters
+ 530   1        if(setTargetTemp<10)
+ 531   1          setTargetTemp=10;
+ 532   1        if(setTargetTemp>45)
+ 533   1          setTargetTemp=45;
+ 534   1        
+ 535   1        delay(2000);
+ 536   1        return;
+ 537   1      }
+ 538          void setHum()
+ 539          {
+ 540   1        dispInstr();
+ 541   1        cmd(0x01); //clear display
+ 542   1        sprintf(result,"%.2f",setTargetHum);
+ 543   1        dispString("Target humidity:");
+ 544   1        cmd(0xC0);
+ 545   1        dispString(result);
+ 546   1        while(OK!=0)
+ 547   1        {
+ 548   2          if(UP==0)
+ 549   2          {
+ 550   3            setTargetHum+=10;
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 10  
+
+ 551   3            while(UP==0); //button debounce
+ 552   3            updateH();
+ 553   3          }
+ 554   2          if(DOWN==0)
+ 555   2          {
+ 556   3            setTargetHum+=1;
+ 557   3            while(DOWN==0); //button debounce
+ 558   3            updateH();
+ 559   3          }
+ 560   2          if(BACK==0)
+ 561   2          {
+ 562   3            setTargetHum-=10;
+ 563   3            while(BACK==0); //button debounce
+ 564   3            updateH();
+ 565   3          }
+ 566   2          if(SET==0)
+ 567   2          {
+ 568   3            setTargetHum-=1;
+ 569   3            while(SET==0); //button debounce
+ 570   3            updateH();
+ 571   3          }
+ 572   2        }
+ 573   1        //ckeck for temperature to be within specified parameters
+ 574   1        if(setTargetHum<0)
+ 575   1          setTargetHum=0;
+ 576   1        if(setTargetHum>100)
+ 577   1          setTargetHum=100;
+ 578   1        
+ 579   1        delay(2000);
+ 580   1        return;
+ 581   1      }
+ 582          
+ 583          //Additional function
+ 584          void dispInstr()
+ 585          {
+ 586   1        cmd(0x01); //clear display
+ 587   1        dispString("UP=+10  DOWN=+1");
+ 588   1        cmd(0xC0);
+ 589   1        dispString("BACK=-10 SET=-1");
+ 590   1        delay(2000);
+ 591   1      }
+ 592          void LED_light()
+ 593          {
+ 594   1        LED_UP=1;
+ 595   1        delay(150);
+ 596   1        LED_UP=0;
+ 597   1        LED_DOWN=1;
+ 598   1        delay(150);
+ 599   1        LED_DOWN=0;
+ 600   1        LED_OK=1;
+ 601   1        delay(150);
+ 602   1        LED_OK=0;
+ 603   1        LED_BACK=1;
+ 604   1        delay(150);
+ 605   1        LED_BACK=0;
+ 606   1      }
+ 607          void updateT()
+ 608          {
+ 609   1        cmd(0xC0);
+ 610   1        sprintf(result,"%.2f",setTargetTemp);
+ 611   1        dispString(result);
+ 612   1      }
+C51 COMPILER V9.60.0.0   COD                                                               06/03/2021 11:42:40 PAGE 11  
+
+ 613          void updateH()
+ 614          {
+ 615   1        cmd(0xC0);
+ 616   1        sprintf(result,"%.2f",setTargetHum);
+ 617   1        dispString(result);
+ 618   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2098    ----
+   CONSTANT SIZE    =    250    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     49      11
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

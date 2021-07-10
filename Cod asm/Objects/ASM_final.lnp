@@ -1,0 +1,3 @@
+".\Objects\Asm_fin.obj" 
+TO ".\Objects\ASM_final" 
+PRINT(".\Listings\ASM_final.m51")

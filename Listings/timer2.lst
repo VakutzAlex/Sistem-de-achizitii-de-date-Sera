@@ -1,0 +1,58 @@
+A51 MACRO ASSEMBLER  TIMER2                                                               05/24/2021 10:07:20 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\timer2.obj
+ASSEMBLER INVOKED BY: A:\Keil\C51\BIN\A51.EXE timer2.a51 SET(SMALL) DEBUG PRINT(.\Listings\timer2.lst) OBJECT(.\Objects\
+                      timer2.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+0000                   1     org 0000h
+                       2             
+  00B4                 3     LED equ P3.4
+0000 438920            4     orl TMOD, #20h
+                       5     
+0003                   6     start:
+0003 758D3C            7     mov th1, #3ch
+0006 758BB0            8     mov tl1, #0b0h
+                       9     
+0009 B2B4             10     cpl LED
+000B 110F             11     acall delay
+                      12     
+000D 80F4             13     sjmp start
+                      14     
+000F                  15     delay:
+000F D28E             16     setb tr1
+                      17     
+0011                  18     again:
+0011 308FFD           19     jnb tf1, again
+0014 C28F             20     clr tf1
+0016 C28E             21     clr tr1
+0018 22               22     ret
+                      23     
+                      24     end
+A51 MACRO ASSEMBLER  TIMER2                                                               05/24/2021 10:07:20 PAGE     2
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+AGAIN. . . . . . .  C ADDR   0011H   A   
+DELAY. . . . . . .  C ADDR   000FH   A   
+LED. . . . . . . .  B ADDR   00B0H.4 A   
+P3 . . . . . . . .  D ADDR   00B0H   A   
+START. . . . . . .  C ADDR   0003H   A   
+TF1. . . . . . . .  B ADDR   0088H.7 A   
+TH1. . . . . . . .  D ADDR   008DH   A   
+TL1. . . . . . . .  D ADDR   008BH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR1. . . . . . . .  B ADDR   0088H.6 A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

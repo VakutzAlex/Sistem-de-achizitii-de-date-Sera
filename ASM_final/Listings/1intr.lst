@@ -1,0 +1,62 @@
+A51 MACRO ASSEMBLER  1INTR                                                                05/31/2021 13:04:48 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+NO OBJECT MODULE REQUESTED
+ASSEMBLER INVOKED BY: A:\Keil\C51\BIN\A51.EXE 1intr.a51 SET(SMALL) DEBUG PRINT(.\Listings\1intr.lst) OBJECT(.\Objects\1i
+                      ntr.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+0000                   1     org 0000h
+                       2     
+0000 758920            3     mov TMOD, #20h
+0003 758DFD            4     mov TH1, #-3
+0006 759840            5     mov SCON, #40h
+0009 D28E              6     setb TR1
+                       7     
+000B                   8     start:
+000B 900100            9     mov dptr, #table
+000E                  10     again:
+000E E4               11     clr a
+000F                  12     mov a, @a+dptr
+*** ________________________________^
+*** ERROR #A40 IN 12 (1intr.a51, LINE 12): INVALID REGISTER
+                      13     
+000F 60FA             14     jz start
+0011 F599             15     mov SBUF, a
+0013                  16     here:
+0013 3099FD           17     jnb TI, here
+0016 C28E             18     clr TR1
+0018 A3               19     inc dptr
+0019 80F3             20     sjmp again
+0100                  21     org 100h
+0100                  22     table:
+0100 59455320         23     db "YES ", 00h  
+0104 00                      
+                      24             
+                      25     end
+A51 MACRO ASSEMBLER  1INTR                                                                05/31/2021 13:04:48 PAGE     2
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+AGAIN. . . . . . .  C ADDR   000EH   A   
+HERE . . . . . . .  C ADDR   0013H   A   
+SBUF . . . . . . .  D ADDR   0099H   A   
+SCON . . . . . . .  D ADDR   0098H   A   
+START. . . . . . .  C ADDR   000BH   A   
+TABLE. . . . . . .  C ADDR   0100H   A   
+TH1. . . . . . . .  D ADDR   008DH   A   
+TI . . . . . . . .  B ADDR   0098H.1 A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR1. . . . . . . .  B ADDR   0088H.6 A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 1 ERROR(S)

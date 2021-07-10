@@ -1,0 +1,42 @@
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    07/09/2021  09:34:47  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0, INVOKED BY:
+A:\KEIL\C51\BIN\BL51.EXE .\Objects\Maybe.obj TO .\Objects\ASMfin PRINT (.\Listings\ASMfin.m51)
+
+
+INPUT MODULES INCLUDED:
+  .\Objects\Maybe.obj (MAYBE)
+
+
+LINK MAP OF MODULE:  .\Objects\ASMfin (MAYBE)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0004H     ABSOLUTE     
+
+
+
+SYMBOL TABLE OF MODULE:  .\Objects\ASMfin (MAYBE)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        MAYBE
+  D:0090H         SYMBOL        P1
+  C:0000H         LINE#         65533
+  C:0002H         LINE#         2
+  -------         ENDMOD        MAYBE
+
+******************************************************************************
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 0004H BYTE ( 0%) *
+******************************************************************************
+
+Program Size: data=8.0 xdata=0 code=4
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

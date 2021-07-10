@@ -1,0 +1,42 @@
+C51 COMPILER V9.60.0.0   TIMER3                                                            05/24/2021 10:43:35 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE TIMER3
+OBJECT MODULE PLACED IN .\Objects\timer3.obj
+COMPILER INVOKED BY: A:\Keil\C51\BIN\C51.EXE timer3.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\timer
+                    -3.lst) TABS(2) OBJECT(.\Objects\timer3.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #define LED P3^4
+   3          
+   4          void T0Delay();
+   5          
+   6          int i;
+   7          
+   8          void main()
+   9          {
+  10   1        while(1)
+  11   1        {
+  12   2          for(i=0;i<2;i++)
+  13   2            {
+  14   3              LED=~LED;
+*** ERROR C141 IN LINE 14 OF timer3.c: syntax error near '=', expected ';'
+  15   3              T0Delay();
+  16   3            }
+  17   2        }
+  18   1      }
+  19          
+  20          void T0Delay()
+  21          {
+  22   1        TMOD = TMOD | 0x01;
+  23   1        TL0=0x96;
+  24   1        TH0=0x6C;
+  25   1        TR0=1;
+  26   1        while(TF0=0);
+  27   1        TR0=0;
+  28   1        TF0=0;
+  29   1      }
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)

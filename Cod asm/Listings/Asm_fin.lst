@@ -1,0 +1,205 @@
+A51 MACRO ASSEMBLER  ASM_FIN                                                              05/30/2021 21:27:05 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\Asm_fin.obj
+ASSEMBLER INVOKED BY: A:\Keil\C51\BIN\A51.EXE Asm_fin.a51 SET(SMALL) DEBUG PRINT(.\Listings\Asm_fin.lst) OBJECT(.\Object
+                      s\Asm_fin.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+0000                   1     org 0000h
+                       2             
+                       3     ;LCD pins
+  0090                 4     RS equ P1.0
+  0091                 5     E equ P1.1
+                       6     
+                       7     ;Button pins
+  0084                 8     UP equ P0.4
+  0085                 9     DOWN equ P0.5
+  0086                10     OK equ P0.6
+  0087                11     BACK equ P0.7
+  0083                12     SET_BTN equ P0.3
+                      13             
+                      14     ;LED pins
+  0094                15     D_UP equ P1.4
+  0095                16     D_DOWN equ P1.5
+  0096                17     D_OK equ P1.6
+  0097                18     D_BACK equ P1.7
+                      19             
+                      20     ;I2C pins
+  0092                21     SDA equ P1.2
+  0093                22     SCL equ P1.3
+                      23             
+                      24     ;ADC pins
+  0080                25     EOC equ P0.0
+  0081                26     OE equ P0.1
+  0082                27     START equ P0.2
+                      28             
+                      29     ;Params
+                      30     ;ball_res equ #5000h
+                      31     ;max_adc equ #256h
+                      32     ;beta equ #3965h
+                      33     ;room_temp equ #298.15h
+                      34     ;res_room_temp equ #5000h
+                      35     
+                      36     ;INPUT-OUTPUT initialization
+0000 75A000           37     mov P2,#00h  
+0003 75B0FF           38     mov P3,#0FFh  
+                      39     
+0006 D284             40     setb UP ;UP=1
+0008 D285             41     setb DOWN ;DOWN=1
+000A D286             42     setb OK ;OK=1
+000C D287             43     setb BACK ;BACK=1
+                      44     
+000E C294             45     clr D_UP ;D_UP=0
+0010 C295             46     clr D_DOWN ;D_DOWN=0
+0012 C296             47     clr D_OK ;D_OK=0
+0014 C297             48     clr D_BACK ;D_BACK=0
+                      49     
+0016 D280             50     setb EOC ;EOC=1
+0018 D281             51     setb OE ;OE=1
+001A D282             52     setb START ;START=1
+                      53     
+                      54     ;LCD initialization
+001C 7438             55     mov a,#38h ;set LCD 8 bit mode
+001E 115E             56     acall LCD_cmd
+0020 1172             57     acall delay
+A51 MACRO ASSEMBLER  ASM_FIN                                                              05/30/2021 21:27:05 PAGE     2
+
+0022 E50C             58     mov a,0Ch ;display on, cursor off
+0024 115E             59     acall LCD_cmd
+0026 1172             60     acall delay
+0028 7401             61     mov a,#01H ;clear dispaly
+002A 115E             62     acall LCD_cmd
+002C 1172             63     acall delay
+002E 7480             64     mov a,#80h ;first line, first position
+0030 115E             65     acall LCD_cmd
+0032 1172             66     acall delay
+                      67     
+                      68     ;Initial message display
+                      69     ;Line1
+0034 780D             70     mov r0,#13;counter for dptr
+0036 900087           71     mov dptr,#mesaj_init1
+0039                  72     here_init1:
+0039 7400             73     mov a,#00h
+003B 93               74     movc a,@a+dptr
+003C F5A0             75     mov P2,a
+003E 1167             76     acall LCD_disp
+0040 1172             77     acall delay
+0042 A3               78     inc dptr
+0043 D8F4             79     djnz r0,here_init1
+                      80     ;Line2
+0045 780E             81     mov r0,#14;counter for dptr
+0047 900095           82     mov dptr,#mesaj_init2
+004A 74C0             83     mov a,#0C0h
+004C 115E             84     acall LCD_cmd
+004E 1172             85     acall delay
+0050                  86     here_init2:
+0050 7400             87     mov a,#00h
+0052 93               88     movc a,@a+dptr
+0053 F5A0             89     mov P2,a
+0055 1167             90     acall LCD_disp
+0057 1172             91     acall delay
+0059 A3               92     inc dptr
+005A D8F4             93     djnz r0,here_init2
+                      94     
+                      95     
+005C                  96     check_btn:
+                      97     
+                      98     
+005C 80FE             99     sjmp check_btn
+                     100     
+                     101     ;LCD command routine
+005E                 102     LCD_cmd:
+005E F5A0            103     mov P2,a
+0060 C290            104     clr RS ;RS=0, instruction register
+0062 D291            105     setb E ;E=1, start data read/write
+0064 C291            106     clr E
+0066 22              107     ret
+                     108     
+                     109     ;LCD display routine
+0067                 110     LCD_disp:
+0067 F5A0            111     mov P2,a
+0069 D290            112     setb RS ;RS=1, data register
+006B D291            113     setb E
+006D 1172            114     acall delay
+006F C291            115     clr E
+0071 22              116     ret
+                     117     
+                     118     ;delay function
+0072                 119     delay:
+0072 C28C            120     clr tr0
+0074 438901          121     orl tmod,#01
+0077 758CEE          122     mov th0,#0eeh
+007A 758A00          123     mov tl0,#00h
+A51 MACRO ASSEMBLER  ASM_FIN                                                              05/30/2021 21:27:05 PAGE     3
+
+007D D28C            124     setb tr0
+007F                 125     again:
+007F 308DFD          126     jnb tf0,again
+0082 C28D            127     clr tf0
+0084 C28C            128     clr tr0
+0086 22              129     ret
+                     130     
+                     131     ;messages section
+0087                 132     mesaj_init1:
+0087 50726573        133     db 'Press any key', 0
+008B 7320616E                
+008F 79206B65                
+0093 7900                    
+0095                 134     mesaj_init2:
+0095 746F2063        135     db 'to continue...', 0
+0099 6F6E7469                
+009D 6E75652E                
+00A1 2E2E00                  
+                     136             
+                     137     end
+A51 MACRO ASSEMBLER  ASM_FIN                                                              05/30/2021 21:27:05 PAGE     4
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+AGAIN. . . . . . .  C ADDR   007FH   A   
+BACK . . . . . . .  B ADDR   0080H.7 A   
+CHECK_BTN. . . . .  C ADDR   005CH   A   
+DELAY. . . . . . .  C ADDR   0072H   A   
+DOWN . . . . . . .  B ADDR   0080H.5 A   
+D_BACK . . . . . .  B ADDR   0090H.7 A   
+D_DOWN . . . . . .  B ADDR   0090H.5 A   
+D_OK . . . . . . .  B ADDR   0090H.6 A   
+D_UP . . . . . . .  B ADDR   0090H.4 A   
+E. . . . . . . . .  B ADDR   0090H.1 A   
+EOC. . . . . . . .  B ADDR   0080H.0 A   
+HERE_INIT1 . . . .  C ADDR   0039H   A   
+HERE_INIT2 . . . .  C ADDR   0050H   A   
+LCD_CMD. . . . . .  C ADDR   005EH   A   
+LCD_DISP . . . . .  C ADDR   0067H   A   
+MESAJ_INIT1. . . .  C ADDR   0087H   A   
+MESAJ_INIT2. . . .  C ADDR   0095H   A   
+OE . . . . . . . .  B ADDR   0080H.1 A   
+OK . . . . . . . .  B ADDR   0080H.6 A   
+P0 . . . . . . . .  D ADDR   0080H   A   
+P1 . . . . . . . .  D ADDR   0090H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+P3 . . . . . . . .  D ADDR   00B0H   A   
+RS . . . . . . . .  B ADDR   0090H.0 A   
+SCL. . . . . . . .  B ADDR   0090H.3 A   
+SDA. . . . . . . .  B ADDR   0090H.2 A   
+SET_BTN. . . . . .  B ADDR   0080H.3 A   
+START. . . . . . .  B ADDR   0080H.2 A   
+TF0. . . . . . . .  B ADDR   0088H.5 A   
+TH0. . . . . . . .  D ADDR   008CH   A   
+TL0. . . . . . . .  D ADDR   008AH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR0. . . . . . . .  B ADDR   0088H.4 A   
+UP . . . . . . . .  B ADDR   0080H.4 A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

@@ -1,0 +1,65 @@
+A51 MACRO ASSEMBLER  TIMER_3                                                              05/24/2021 10:33:58 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\timer 3.obj
+ASSEMBLER INVOKED BY: A:\Keil\C51\BIN\A51.EXE timer 3.a51 SET(SMALL) DEBUG PRINT(.\Listings\timer 3.lst) OBJECT(.\Object
+                      s\timer 3.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+0000                   1     org 0000h
+                       2             
+  0002                 3     delay1 equ 02h
+                       4             
+  00B4                 5     LED equ P3.4
+0000 438901            6     orl TMOD, #01h
+                       7     
+0003                   8     start:
+0003 758C96            9     mov th0,#96h
+0006 758A6C           10     mov tl0, #6ch
+0009 7802             11     mov r0, #delay1
+                      12     
+000B B2B4             13     cpl LED
+000D                  14     here:
+000D 1113             15     acall delay
+000F D8FC             16     djnz r0, here
+                      17     
+0011 80F0             18     sjmp start
+                      19     
+0013                  20     delay:
+0013 D28C             21     setb tr0
+                      22     
+0015                  23     again:
+0015 308DFD           24     jnb tf0, again
+0018 C28D             25     clr tf0
+001A C28C             26     clr tr0
+001C 22               27     ret
+                      28     
+                      29     end
+A51 MACRO ASSEMBLER  TIMER_3                                                              05/24/2021 10:33:58 PAGE     2
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+AGAIN. . . . . . .  C ADDR   0015H   A   
+DELAY. . . . . . .  C ADDR   0013H   A   
+DELAY1 . . . . . .  N NUMB   0002H   A   
+HERE . . . . . . .  C ADDR   000DH   A   
+LED. . . . . . . .  B ADDR   00B0H.4 A   
+P3 . . . . . . . .  D ADDR   00B0H   A   
+START. . . . . . .  C ADDR   0003H   A   
+TF0. . . . . . . .  B ADDR   0088H.5 A   
+TH0. . . . . . . .  D ADDR   008CH   A   
+TL0. . . . . . . .  D ADDR   008AH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR0. . . . . . . .  B ADDR   0088H.4 A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)
