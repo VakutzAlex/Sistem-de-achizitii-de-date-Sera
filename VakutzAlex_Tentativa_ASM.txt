@@ -1,0 +1,494 @@
+org 0000h
+
+;LCD pins
+RS equ P1.0
+E equ P1.1
+
+;Button pins
+UP equ P0.4
+DOWN equ P0.5
+SET_TEMP equ P0.6
+BACK equ P0.7
+SET_HUM equ P0.3
+	
+;LED pins
+D_UP equ P1.4
+D_DOWN equ P1.5
+D_OK equ P1.6
+D_BACK equ P1.7
+	
+;I2C pins
+SDA equ P1.2
+SCL equ P1.3
+	
+;ADC pins
+EOC equ P0.0
+OE equ P0.1
+START equ P0.2
+	
+;Params
+;ball_res equ 5000
+;max_adc equ 256
+;beta equ 965
+;room_temp equ 298
+;res_room_temp equ 5000
+
+;INPUT-OUTPUT initialization
+mov P2,#00h //LCD
+mov P3,#0FFh //ADC
+
+setb UP ;UP=1
+setb DOWN ;DOWN=1
+setb SET_TEMP ;SET_TEMP=1
+setb BACK ;BACK=1
+setb SET_HUM ;SET_HUM=1
+
+clr D_UP ;D_UP=0
+clr D_DOWN ;D_DOWN=0
+clr D_OK ;D_OK=0
+clr D_BACK ;D_BACK=0
+
+setb EOC ;EOC=1
+setb OE ;OE=1
+setb START ;START=1
+
+main:
+
+;LCD initialization
+mov a,#38h ;set LCD 8 bit mode
+acall LCD_cmd
+acall delay
+mov a,#0Ch ;display on, cursor off
+acall LCD_cmd
+acall delay
+mov a,#01H ;clear dispaly
+acall LCD_cmd
+acall delay
+mov a,#80h ;first line, first position
+acall LCD_cmd
+acall delay
+
+;Initial message display
+;Line1
+init_msg:
+mov a, #01h
+acall LCD_cmd
+acall delay
+mov r0,#13;counter for dptr
+mov dptr,#mesaj_init1
+here_init1:
+mov a,#00h
+movc a,@a+dptr
+mov P2,a
+acall LCD_disp
+acall delay
+inc dptr
+djnz r0,here_init1
+;Line2
+mov r0,#14;counter for dptr
+mov dptr,#mesaj_init2
+mov a,#0C0h
+acall LCD_cmd
+acall delay
+here_init2:
+mov a,#00h
+movc a,@a+dptr
+mov P2,a
+acall LCD_disp
+acall delay
+inc dptr
+djnz r0,here_init2
+
+check_btn:
+jnb UP, startScreen
+jnb DOWN, startScreen
+jnb SET_TEMP, startScreen
+jnb BACK, startScreen
+jnb SET_HUM, startScreen
+sjmp check_btn
+
+startScreen:
+mov a,#01h
+acall LCD_cmd
+acall delay
+;startScreen message display
+;Line1
+mov r0,#13;counter for dptr
+mov dptr,#mesaj_start1
+here_start1:
+mov a,#00h
+movc a,@a+dptr
+mov P2,a
+acall LCD_disp
+acall delay
+inc dptr
+djnz r0,here_start1
+;Line2
+mov r0,#10;counter for dptr
+mov dptr,#mesaj_start2
+mov a,#0C0h
+acall LCD_cmd
+acall delay
+here_start2:
+mov a,#00h
+movc a,@a+dptr
+mov P2,a
+acall LCD_disp
+acall delay
+inc dptr
+djnz r0,here_start2
+
+check_btn1:
+jnb UP, conf_temp
+jnb DOWN, conf_hum
+jnb BACK, init_msg
+sjmp check_btn1
+
+conf_temp:
+mov a,#01h
+acall LCD_cmd
+acall delay
+;Line1
+mov a,#80h
+acall LCD_cmd
+acall delay
+mov r0,#12;counter for dptr
+mov dptr,#mesaj_TempMeasured
+here_ok_temp1:
+mov a,#00h
+movc a,@a+dptr
+mov P2,a
+acall LCD_disp
+acall delay
+inc dptr
+djnz r0,here_ok_temp1
+
+sjmp target
+
+conf_hum:
+mov a,#01h
+acall LCD_cmd
+acall delay
+;Line1
+mov a,#80h
+acall LCD_cmd
+acall delay
+mov r0,#09;counter for dptr
+mov dptr,#mesaj_HumMeasured
+here_ok_hum1:
+mov a,#00h
+movc a,@a+dptr
+mov P2,a
+acall LCD_disp
+acall delay
+inc dptr
+djnz r0,here_ok_hum1
+mov a, #8Ah
+acall LCD_cmd
+acall delay
+
+;I2C communication init
+acall I2C_init
+acall I2C_start
+mov a,#80h
+acall I2C_sendByte
+mov a,#0e5h
+acall I2C_sendByte
+acall I2C_stop
+
+;I2C data receiving
+acall I2C_init
+acall I2C_start
+mov a,#81h
+acall I2C_sendByte
+acall I2C_readByte
+;acall conversion_hum1
+mov r2,a
+acall I2C_ack
+acall I2C_readByte
+;acall conversion_hum2
+add a,r2
+subb a,#7
+;acall conversion_hum3
+acall I2C_nack
+acall I2C_stop
+
+
+sjmp target
+
+target:
+mov r0,#7;counter for dptr
+mov dptr,#mesaj_Target
+mov a,#0C0h
+acall LCD_cmd
+acall delay
+here_ok_target:
+mov a,#00h
+movc a,@a+dptr
+mov P2,a
+acall LCD_disp
+acall delay
+inc dptr
+djnz r0,here_ok_target
+
+check_btn2:
+jnb BACK, checkpoint_BACK
+jnb SET_TEMP, setTemp
+jnb SET_HUM, setHum
+sjmp check_btn2
+
+checkpoint_BACK:
+ljmp startScreen
+
+setTemp:
+mov a, #01h
+acall LCD_cmd
+acall delay
+mov a,#80h
+acall LCD_cmd
+acall delay
+mov r0,#19;counter for dptr
+mov dptr,#msg1
+targetT:
+mov a,#00h
+movc a,@a+dptr
+mov P2,a
+acall LCD_disp
+acall delay
+inc dptr
+djnz r0,targetT
+mov a,#0C0h
+acall LCD_cmd
+acall delay
+mov a, #00h
+add a, #30h
+mov r2, a
+mov P2, r2
+acall LCD_disp
+acall delay
+
+sjmp modifyT
+
+setHum:
+mov a, #01h
+acall LCD_cmd
+acall delay
+mov a,#80h
+acall LCD_cmd
+acall delay
+mov r0,#16;counter for dptr
+mov dptr,#msg2
+targetH:
+mov a,#00h
+movc a,@a+dptr
+mov P2,a
+acall LCD_disp
+acall delay
+inc dptr
+djnz r0,targetH
+mov a,#0C0h
+acall LCD_cmd
+acall delay
+mov a, #00h
+add a, #30h
+mov r1, a
+mov P2, r1
+acall LCD_disp
+acall delay
+
+sjmp modifyH
+
+modifyT:
+acall delay
+jnb SET_TEMP, jmp_conf_temp
+jnb UP, inc1T
+jnb DOWN, dec1T
+sjmp modifyT
+
+modifyH:
+acall delay
+jnb SET_HUM, jmp_conf_hum
+jnb UP, inc1H
+jnb DOWN, dec1H
+sjmp modifyH
+
+inc1T:
+mov a, r2
+subb a, #30h
+inc a
+add a, #30h
+mov r2, a
+clr a
+mov a, #0c0h
+acall LCD_cmd
+acall delay
+mov P2, r2
+acall LCD_disp
+acall delay
+sjmp modifyT
+
+dec1T:
+mov a, r2
+subb a, #30h
+dec a
+add a, #30h
+mov r2, a
+clr a
+mov a, #0c0h
+acall LCD_cmd
+acall delay
+mov P2, r2
+acall LCD_disp
+acall delay
+sjmp modifyT
+
+inc1H:
+mov a, r1
+subb a, #30h
+inc a
+add a, #30h
+mov r1, a
+clr a
+mov a, #0c0h
+acall LCD_cmd
+acall delay
+mov P2, r1
+acall LCD_disp
+acall delay
+sjmp modifyH
+
+dec1H:
+mov a, r1
+subb a, #30h
+dec a
+add a, #30h
+mov r1, a
+clr a
+mov a, #0c0h
+acall LCD_cmd
+acall delay
+mov P2, r1
+acall LCD_disp
+acall delay
+sjmp modifyH
+
+jmp_conf_hum:
+ljmp conf_hum
+
+jmp_conf_temp:
+ljmp conf_temp
+
+ljmp main
+
+;Bit bang
+I2C_init:
+setb sda
+setb scl
+ret
+
+I2C_start:
+setb scl
+clr sda
+clr scl
+ret
+
+I2C_stop:
+clr scl
+clr sda
+setb scl
+setb sda
+ret
+
+I2C_ack:
+clr sda
+setb scl
+clr scl
+setb sda
+ret
+
+I2C_nack:
+setb sda
+setb scl
+clr scl
+setb scl
+ret
+
+I2C_sendByte:
+mov r7,#08h
+back1:
+clr SCL
+rlc a
+mov SDA,c
+setb SCL
+djnz r7, back1
+clr SCL
+setb SDA
+setb SCL
+mov c, SDA
+clr SCL
+ret
+
+I2C_readByte:
+mov r7,#08h
+back2:
+clr SCL
+setb SCL
+mov c, SDA
+rlc a
+djnz r7, back2
+clr SCL
+setb SDA
+ret
+;End of Bit bang
+
+;LCD command routine
+LCD_cmd:
+mov P2,a
+clr RS 
+setb E
+clr E
+ret
+
+;LCD display
+LCD_disp:
+mov P2,a
+setb RS
+setb E
+acall delay
+clr E
+ret
+
+;delay
+delay:
+clr tr0
+orl tmod,#01
+mov th0,#0eeh
+mov tl0,#00h
+setb tr0
+again:
+jnb tf0,again
+clr tf0
+clr tr0
+ret
+
+;messages
+mesaj_init1:
+db 'Press any key', 0
+mesaj_init2:
+db 'to continue...', 0
+mesaj_start1:
+db '1.Temperature', 0
+mesaj_start2:
+db '2.Humidity', 0
+mesaj_TempMeasured:
+db 'Temperature:', 0
+mesaj_HumMeasured:
+db 'Humidity:', 0
+mesaj_Target:
+db 'Target:', 0
+msg1:
+db 'Target temperature:', 0
+msg2:
+db 'Target humidity:', 0
+	
+end
